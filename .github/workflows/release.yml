@@ -30,7 +30,7 @@ jobs:
     needs: [setup]
     strategy:
       matrix:
-        arch: ["AMD64", "ARM", "AARCH64", "RPI_ARM"]
+        arch: ["amd64", "arm", "aarch64", "armhf"]
     runs-on: ubuntu-latest
     env:
       PACKAGENAME: ${{ needs.setup.outputs.APPNAME }}-${{ needs.setup.outputs.VERSION }}-${{ matrix.arch }}
@@ -50,14 +50,13 @@ jobs:
             libasio-dev
       - name: Build
         run: |
-          if [[ "${{ matrix.arch }}" == "RPI_ARM" ]]; then
+          if [[ "${{ matrix.arch }}" == "armhf" ]]; then
             git clone https://github.com/chriskohlhoff/asio.git
             cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS="-s" -DCMAKE_CXX_FLAGS="-s" \
-              -DENABLE_DMR=1 -DENABLE_P25=1 -DENABLE_NXDN=1 -DCROSS_COMPILE_${{ matrix.arch }}=1 \
-              -DWITH_ASIO='asio/asio' .
+              -DCROSS_COMPILE_RPI_ARM=1 -DWITH_ASIO='asio/asio' .
           else
             cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS="-s" -DCMAKE_CXX_FLAGS="-s" \
-              -DENABLE_DMR=1 -DENABLE_P25=1 -DENABLE_NXDN=1 -DCROSS_COMPILE_${{ matrix.arch }}=1 .
+              -D "CROSS_COMPILE_$(echo '${{ matrix.arch }}' | tr '[:lower:]' '[:upper:]')=1" .
           fi
 
           make -j $(nproc)
@@ -92,7 +91,7 @@ jobs:
     needs: [setup, build, create-release]
     strategy:
       matrix:
-        arch: ["AMD64", "ARM", "AARCH64", "RPI_ARM"]
+        arch: ["amd64", "arm", "aarch64", "armhf"]
     runs-on: ubuntu-latest
     env:
       PACKAGENAME: ${{ needs.setup.outputs.APPNAME }}-${{ needs.setup.outputs.VERSION }}-${{ matrix.arch }}
