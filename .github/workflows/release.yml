@@ -27,7 +27,7 @@ jobs:
         run: echo VERSION=${GITHUB_REF/refs\/tags\//} >> $GITHUB_OUTPUT
 
   build:
-    needs: [setup, create-release]
+    needs: [setup]
     strategy:
       matrix:
         arch: ["AMD64", "ARM", "AARCH64", "RPI_ARM"]
