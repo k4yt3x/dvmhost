@@ -164,6 +164,13 @@ bool Voice::process(uint8_t* data, uint32_t len)
                 return false;
             }
 
+            if (m_verbose && m_debug) {
+                uint8_t mi[P25_MI_LENGTH_BYTES];
+                ::memset(mi, 0x00U, p25::P25_MI_LENGTH_BYTES);
+                lc.getMI(mi);
+                Utils::dump(1U, "P25 HDU MI read from RF", mi, P25_MI_LENGTH_BYTES);
+            }
+
             if (m_verbose) {
                 LogMessage(LOG_RF, P25_HDU_STR ", HDU_BSDWNACT, dstId = %u, algo = $%02X, kid = $%04X", lc.getDstId(), lc.getAlgId(), lc.getKId());
             }
@@ -783,6 +790,9 @@ bool Voice::processNetwork(uint8_t* data, uint32_t len, lc::LC& control, data::L
                 m_netLastLDU1 = control;
                 m_netLastFrameType = frameType;
 
+                // save MI to member variable before writing to RF
+                control.getMI(m_lastMI);
+
                 if (m_p25->m_control) {
                     lc::LC control = lc::LC(*m_dfsiLC.control());
                     m_p25->m_affiliations.touchGrant(control.getDstId());
@@ -1201,17 +1211,16 @@ void Voice::writeNet_LDU1()
         ::memset(mi, 0x00U, P25_MI_LENGTH_BYTES);
 
         if (m_netLastLDU1.getAlgId() != P25_ALGO_UNENCRYPT && m_netLastLDU1.getKId() != 0) {
-            m_netLastLDU1.getMI(mi);
-
             control.setAlgId(m_netLastLDU1.getAlgId());
             control.setKId(m_netLastLDU1.getKId());
         }
-        else {
-            control.getMI(mi);
-        }
+
+
+        // restore MI from member variable
+        ::memcpy(mi, m_lastMI, P25_MI_LENGTH_BYTES);
 
         if (m_verbose && m_debug) {
-            Utils::dump(1U, "Network HDU MI", mi, P25_MI_LENGTH_BYTES);
+            Utils::dump(1U, "P25 HDU MI from network to RF", mi, P25_MI_LENGTH_BYTES);
         }
 
         m_netLC.setMI(mi);

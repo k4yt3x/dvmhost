@@ -104,6 +104,7 @@ namespace p25
 
             uint8_t m_lastDUID;
             uint8_t* m_lastIMBE;
+            uint8_t m_lastMI[P25_MI_LENGTH_BYTES];
 
             bool m_hadVoice;
             uint32_t m_lastRejectId;
