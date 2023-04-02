@@ -1689,15 +1689,14 @@ void Voice::getNextMI(uint8_t lastMI[9U], uint8_t nextMI[9U])
         uint64_t res = value & 0xA000202004004000;
         value = (value << 1) & 0xFFFFFFFFFFFFFFFE;
 
+        // count set bits using Brian Kernighan's algorithm
         uint64_t count = 0;
-        uint64_t n = res;
-        while (n) {
-            count += n & 1;
-            n >>= 1;
+        while (res) {
+            res &= (res - 1);
+            ++count;
         }
-        res = count;
 
-        value += (res & 0x01);
+        value += (count & 0x01);
     }
 
     for (int i = 0; i < 8; ++i) {
