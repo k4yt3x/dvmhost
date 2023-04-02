@@ -142,6 +142,8 @@ namespace p25
             void insertMissingAudio(uint8_t* data);
             /// <summary>Helper to insert IMBE null frames for missing audio.</summary>
             void insertNullAudio(uint8_t* data);
+            /// <summary>Helper to insert encrypted IMBE null frames for missing audio.</summary>
+            void insertEncryptedNullAudio(uint8_t* data);
         };
     } // namespace packet
 } // namespace p25

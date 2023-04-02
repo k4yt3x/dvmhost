@@ -535,7 +535,12 @@ bool Voice::process(uint8_t* data, uint32_t len)
                 uint8_t buffer[9U * 25U];
                 ::memset(buffer, 0x00U, 9U * 25U);
 
-                insertNullAudio(buffer);
+                if (m_rfLC.getEncrypted()) {
+                    insertEncryptedNullAudio(buffer);
+                }
+                else {
+                    insertNullAudio(buffer);
+                }
 
                 LogWarning(LOG_RF, P25_LDU1_STR ", exceeded lost audio threshold, filling in");
 
@@ -549,15 +554,6 @@ bool Voice::process(uint8_t* data, uint32_t len)
                 m_audio.encode(data + 2U, buffer + 155U, 6U);
                 m_audio.encode(data + 2U, buffer + 180U, 7U);
                 m_audio.encode(data + 2U, buffer + 204U, 8U);
-
-                // reset the encryption flags if necessary
-                if (m_rfLC.getEncrypted()) {
-                    m_rfLC.setEncrypted(false);
-                    m_rfLC.setAlgId(P25_ALGO_UNENCRYPT);
-
-                    // regenerate LDU1 data
-                    m_rfLC.encodeLDU1(data + 2U);
-                }
             }
 
             m_rfBits += 1233U;
@@ -623,7 +619,12 @@ bool Voice::process(uint8_t* data, uint32_t len)
                 uint8_t buffer[9U * 25U];
                 ::memset(buffer, 0x00U, 9U * 25U);
 
-                insertNullAudio(buffer);
+                if (m_rfLC.getEncrypted()) {
+                    insertEncryptedNullAudio(buffer);
+                }
+                else {
+                    insertNullAudio(buffer);
+                }
 
                 LogWarning(LOG_RF, P25_LDU2_STR ", exceeded lost audio threshold, filling in");
 
@@ -637,15 +638,6 @@ bool Voice::process(uint8_t* data, uint32_t len)
                 m_audio.encode(data + 2U, buffer + 155U, 6U);
                 m_audio.encode(data + 2U, buffer + 180U, 7U);
                 m_audio.encode(data + 2U, buffer + 204U, 8U);
-
-                // reset the encryption flags if necessary
-                if (m_rfLC.getEncrypted()) {
-                    m_rfLC.setEncrypted(false);
-                    m_rfLC.setAlgId(P25_ALGO_UNENCRYPT);
-
-                    // regenerate LDU2 data
-                    m_rfLC.encodeLDU2(data + 2U);
-                }
             }
 
             m_rfBits += 1233U;
@@ -1615,5 +1607,49 @@ void Voice::insertNullAudio(uint8_t* data)
 
     if (data[200U] == 0x00U) {
         ::memcpy(data + 204U, P25_NULL_IMBE, 11U);
+    }
+}
+
+/// <summary>
+/// Helper to insert encrypted IMBE null frames for missing audio.
+/// </summary>
+/// <param name="data"></param>
+
+void Voice::insertEncryptedNullAudio(uint8_t* data)
+{
+    if (data[0U] == 0x00U) {
+        ::memcpy(data + 10U, P25_ENCRYPTED_NULL_IMBE, 11U);
+    }
+
+    if (data[25U] == 0x00U) {
+        ::memcpy(data + 26U, P25_ENCRYPTED_NULL_IMBE, 11U);
+    }
+
+    if (data[50U] == 0x00U) {
+        ::memcpy(data + 55U, P25_ENCRYPTED_NULL_IMBE, 11U);
+    }
+
+    if (data[75U] == 0x00U) {
+        ::memcpy(data + 80U, P25_ENCRYPTED_NULL_IMBE, 11U);
+    }
+
+    if (data[100U] == 0x00U) {
+        ::memcpy(data + 105U, P25_ENCRYPTED_NULL_IMBE, 11U);
+    }
+
+    if (data[125U] == 0x00U) {
+        ::memcpy(data + 130U, P25_ENCRYPTED_NULL_IMBE, 11U);
+    }
+
+    if (data[150U] == 0x00U) {
+        ::memcpy(data + 155U, P25_ENCRYPTED_NULL_IMBE, 11U);
+    }
+
+    if (data[175U] == 0x00U) {
+        ::memcpy(data + 180U, P25_ENCRYPTED_NULL_IMBE, 11U);
+    }
+
+    if (data[200U] == 0x00U) {
+        ::memcpy(data + 204U, P25_ENCRYPTED_NULL_IMBE, 11U);
     }
 }
