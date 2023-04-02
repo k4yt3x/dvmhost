@@ -1680,10 +1680,10 @@ void Voice::insertEncryptedNullAudio(uint8_t* data)
 
 void Voice::getNextMI(uint8_t lastMI[9U], uint8_t nextMI[9U])
 {
-    unsigned char carry, i, cycle;
+    uint8_t carry, i;
     std::copy(lastMI, lastMI + 9, nextMI);
 
-    for (cycle = 0; cycle < 64; cycle++) {
+    for (uint8_t cycle = 0; cycle < 64; cycle++) {
         // calculate bit 0 for the next cycle
         carry = ((nextMI[0] >> 7) ^ (nextMI[0] >> 5) ^ (nextMI[2] >> 5) ^
                  (nextMI[3] >> 5) ^ (nextMI[4] >> 2) ^ (nextMI[6] >> 6)) &
