@@ -144,6 +144,8 @@ namespace p25
             void insertNullAudio(uint8_t* data);
             /// <summary>Helper to insert encrypted IMBE null frames for missing audio.</summary>
             void insertEncryptedNullAudio(uint8_t* data);
+            /// <summary>Given the last MI, generate the next MI using LFSR.</summary>
+            void getNextMI(uint8_t lastMI[9U], uint8_t nestMI[9U]);
         };
     } // namespace packet
 } // namespace p25

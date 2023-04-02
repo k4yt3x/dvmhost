@@ -592,6 +592,23 @@ bool Voice::process(uint8_t* data, uint32_t len)
                 LogWarning(LOG_RF, P25_LDU2_STR ", undecodable LC, using last LDU2 LC");
                 m_rfLC = m_rfLastLDU2;
                 m_rfUndecodableLC++;
+
+                // regenerate the MI using LFSR
+                uint8_t lastMI[P25_MI_LENGTH_BYTES];
+                ::memset(lastMI, 0x00U, P25_MI_LENGTH_BYTES);
+
+                uint8_t nextMI[P25_MI_LENGTH_BYTES];
+                ::memset(nextMI, 0x00U, P25_MI_LENGTH_BYTES);
+
+                m_rfLastLDU2.getMI(lastMI);
+                getNextMI(lastMI, nextMI);
+
+                if (m_verbose && m_debug) {
+                    Utils::dump(1U, "Previous P25 HDU MI", lastMI, P25_MI_LENGTH_BYTES);
+                    Utils::dump(1U, "Calculated next P25 HDU MI", nextMI, P25_MI_LENGTH_BYTES);
+                }
+
+                m_rfLC.setMI(nextMI);
             }
             else {
                 m_rfLastLDU2 = m_rfLC;
@@ -1652,4 +1669,38 @@ void Voice::insertEncryptedNullAudio(uint8_t* data)
     if (data[200U] == 0x00U) {
         ::memcpy(data + 204U, P25_ENCRYPTED_NULL_IMBE, 11U);
     }
+}
+
+/// <summary>
+/// Given the last MI, generate the next MI using LFSR.
+/// </summary>
+/// <param name="lastMI"></param>
+/// <param name="nextMI"></param>
+
+void Voice::getNextMI(uint8_t lastMI[9U], uint8_t nextMI[9U])
+{
+    uint64_t value = 0;
+    for (int i = 0; i < 8; ++i) {
+        value |= static_cast<uint64_t>(lastMI[i]) << (8 * (7 - i));
+    }
+
+    for (int x = 0; x < 64; ++x) {
+        uint64_t res = value & 0xA000202004004000;
+        value = (value << 1) & 0xFFFFFFFFFFFFFFFE;
+
+        uint64_t count = 0;
+        uint64_t n = res;
+        while (n) {
+            count += n & 1;
+            n >>= 1;
+        }
+        res = count;
+
+        value += (res & 0x01);
+    }
+
+    for (int i = 0; i < 8; ++i) {
+        nextMI[i] = static_cast<uint8_t>(value >> (8 * (7 - i)));
+    }
+    nextMI[8] = lastMI[8];
 }
