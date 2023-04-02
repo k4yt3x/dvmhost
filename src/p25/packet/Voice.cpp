@@ -609,6 +609,7 @@ bool Voice::process(uint8_t* data, uint32_t len)
                 }
 
                 m_rfLC.setMI(nextMI);
+                m_rfLastLDU2.setMI(nextMI);
             }
             else {
                 m_rfLastLDU2 = m_rfLC;
