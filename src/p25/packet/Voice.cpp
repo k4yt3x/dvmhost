@@ -1680,27 +1680,23 @@ void Voice::insertEncryptedNullAudio(uint8_t* data)
 
 void Voice::getNextMI(uint8_t lastMI[9U], uint8_t nextMI[9U])
 {
-    uint64_t value = 0;
-    for (int i = 0; i < 8; ++i) {
-        value |= static_cast<uint64_t>(lastMI[i]) << (8 * (7 - i));
-    }
+    unsigned char carry, i, cycle;
+    std::copy(lastMI, lastMI + 9, nextMI);
 
-    for (int x = 0; x < 64; ++x) {
-        uint64_t res = value & 0xA000202004004000;
-        value = (value << 1) & 0xFFFFFFFFFFFFFFFE;
+    for (cycle = 0; cycle < 64; cycle++) {
+        // calculate bit 0 for the next cycle
+        carry = ((nextMI[0] >> 7) ^ (nextMI[0] >> 5) ^ (nextMI[2] >> 5) ^
+                 (nextMI[3] >> 5) ^ (nextMI[4] >> 2) ^ (nextMI[6] >> 6)) &
+                0x01;
 
-        // count set bits using Brian Kernighan's algorithm
-        uint64_t count = 0;
-        while (res) {
-            res &= (res - 1);
-            ++count;
+        // shift all the list elements, except the last one
+        for (i = 0; i < 7; i++) {
+
+            // grab high bit from the next element and use it as our low bit
+            nextMI[i] = ((nextMI[i] & 0x7F) << 1) | (nextMI[i + 1] >> 7);
         }
 
-        value += (count & 0x01);
+        // shift last element, then copy the bit 0 we calculated in
+        nextMI[7] = ((nextMI[i] & 0x7F) << 1) | carry;
     }
-
-    for (int i = 0; i < 8; ++i) {
-        nextMI[i] = static_cast<uint8_t>(value >> (8 * (7 - i)));
-    }
-    nextMI[8] = lastMI[8];
 }
