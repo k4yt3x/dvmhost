@@ -107,15 +107,11 @@ bool Voice::process(uint8_t* data, uint32_t len)
 
     // Decode the NID
     bool valid = m_p25->m_nid.decode(data + 2U);
-
-    if (m_p25->m_rfState == RS_RF_LISTENING && !valid) {
+    if (!valid) {
         return false;
     }
 
     uint8_t duid = m_p25->m_nid.getDUID();
-    if (!valid) {
-        return false;
-    }
 
     // are we interrupting a running CC?
     if (m_p25->m_ccRunning) {
