@@ -108,22 +108,13 @@ bool Voice::process(uint8_t* data, uint32_t len)
     // Decode the NID
     bool valid = m_p25->m_nid.decode(data + 2U);
 
-    if (m_p25->m_rfState == RS_RF_LISTENING && !valid)
+    if (m_p25->m_rfState == RS_RF_LISTENING && !valid) {
         return false;
+    }
 
     uint8_t duid = m_p25->m_nid.getDUID();
     if (!valid) {
-        switch (m_lastDUID) {
-            case P25_DUID_HDU:
-            case P25_DUID_LDU2:
-                duid = P25_DUID_LDU1;
-                break;
-            case P25_DUID_LDU1:
-                duid = P25_DUID_LDU2;
-                break;
-            default:
-                break;
-        }
+        return false;
     }
 
     // are we interrupting a running CC?
@@ -213,9 +204,14 @@ bool Voice::process(uint8_t* data, uint32_t len)
         return true;
     }
     else if (duid == P25_DUID_LDU1) {
-        bool alreadyDecoded = false;
+        
+        // prevent two LDUs of the same type from being sent consecutively
+        if (m_lastDUID == P25_DUID_LDU1) {
+            return false;
+        }
         m_lastDUID = P25_DUID_LDU1;
 
+        bool alreadyDecoded = false;
         uint8_t frameType = P25_FT_DATA_UNIT;
         if (m_p25->m_rfState == RS_RF_LISTENING) {
             // if this is a late entry call, clear states
@@ -581,6 +577,11 @@ bool Voice::process(uint8_t* data, uint32_t len)
         }
     }
     else if (duid == P25_DUID_LDU2) {
+        
+        // prevent two LDUs of the same type from being sent consecutively
+        if (m_lastDUID == P25_DUID_LDU2) {
+            return false;
+        }
         m_lastDUID = P25_DUID_LDU2;
 
         if (m_p25->m_rfState == RS_RF_LISTENING) {
@@ -955,6 +956,7 @@ Voice::Voice(Control* p25, network::BaseNetwork* network, bool debug, bool verbo
     m_netLDU2(nullptr),
     m_lastDUID(P25_DUID_TDU),
     m_lastIMBE(nullptr),
+    m_lastMI(nullptr),
     m_hadVoice(false),
     m_lastRejectId(0U),
     m_silenceThreshold(DEFAULT_SILENCE_THRESHOLD),
@@ -970,6 +972,9 @@ Voice::Voice(Control* p25, network::BaseNetwork* network, bool debug, bool verbo
 
     m_lastIMBE = new uint8_t[11U];
     ::memcpy(m_lastIMBE, P25_NULL_IMBE, 11U);
+
+    m_lastMI = new uint8_t[P25_MI_LENGTH_BYTES];
+    ::memset(m_lastMI, 0x00U, P25_MI_LENGTH_BYTES);
 }
 
 /// <summary>
@@ -980,6 +985,7 @@ Voice::~Voice()
     delete[] m_netLDU1;
     delete[] m_netLDU2;
     delete[] m_lastIMBE;
+    delete[] m_lastMI;
 }
 
 /// <summary>
