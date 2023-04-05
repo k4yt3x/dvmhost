@@ -1,5 +1,7 @@
-# Ignore project temporary files
-asio/
+# Ignore built binaries
+build/
+dvmcmd
+dvmhost
 
 # Ignore CMake temporary files
 CMakeLists.txt.user
