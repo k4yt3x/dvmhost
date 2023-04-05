@@ -84,7 +84,7 @@ jobs:
         with:
           tag_name: ${{ needs.setup.outputs.VERSION }}
           name: Release ${{ needs.setup.outputs.VERSION }}
-          draft: true
+          draft: false
           prerelease: false
 
   upload:
